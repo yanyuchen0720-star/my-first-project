@@ -1,0 +1,53 @@
+import random
+import requests
+from datetime import date, timedelta
+
+def get_realtime_tw_stocks():
+    """連線到證交所 API 抓取最新所有上市股票清單"""
+    url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            # 整理成 "代碼 名稱" 的格式
+            return [f"{item['Code']} {item['Name']}" for item in data]
+        else:
+            print(f"警告：無法取得資料 (錯誤代碼: {response.status_code})，改用備用名單。")
+    except Exception as e:
+        print(f"警告：連線發生錯誤 ({e})，改用備用名單。")
+    
+    # 如果 API 失敗，回傳一組基本的備用清單
+    return ['2330 台積電', '2317 鴻海', '2454 聯發科', '0050 元大台灣50']
+
+def draw_strategy():
+    print("正在連線證交所更新股票池...")
+    stock_pool = get_realtime_tw_stocks()
+    
+    # 1. 隨機一檔台股
+    chosen_stock = random.choice(stock_pool)
+
+    # 2. 抽一個日期 (20160419~20260419)
+    start_date = date(2016, 4, 19)
+    end_date = date(2026, 4, 19)
+    random_days = random.randint(0, (end_date - start_date).days)
+    random_date = (start_date + timedelta(days=random_days)).strftime('%Y%m%d')
+
+    # 3. {MA、EMA、BB} 三選一
+    chosen_main = random.choice(['MA', 'EMA', 'BB'])
+
+    # 4. {VOL, KD, MACD, RSI, WR, CCI, OBV, INST} 隨機抽 1~8 個
+    sub_indicators = ['VOL', 'KD', 'MACD', 'RSI', 'WR', 'CCI', 'OBV', 'INST']
+    num_to_draw = random.randint(1, len(sub_indicators))
+    chosen_subs = random.sample(sub_indicators, num_to_draw)
+
+    # 顯示最終結果
+    print("\n" + "="*30)
+    print(f"【隨機交易策略抽籤結果】")
+    print(f"📍 標的股票：{chosen_stock}")
+    print(f"📅 測試日期：{random_date}")
+    print(f"📈 主圖指標：{chosen_main}")
+    print(f"📊 副圖指標：{', '.join(chosen_subs)} ({num_to_draw}個)")
+    print("="*30)
+
+if __name__ == '__main__':
+    draw_strategy()
